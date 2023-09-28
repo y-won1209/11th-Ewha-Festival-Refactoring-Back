@@ -142,6 +142,8 @@ venv.bak/
 .newvenv
 newvenv/
 newvenv.bak/
+.env.prod 
+.env.prod/
 
 # Spyder project settings
 .spyderproject
