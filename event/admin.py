@@ -36,3 +36,8 @@ class CommentAdmin(admin.ModelAdmin):
 class EventNoticeAdmin(admin.ModelAdmin):
 	list_display = ['id', 'content', 'event']
 	list_display_links = ['id']
+
+@admin.register(Time)
+class TimeAdmin(admin.ModelAdmin):
+	list_display = ['id', 'starttime', 'finishtime', 'event']
+	list_display_links = ['id']

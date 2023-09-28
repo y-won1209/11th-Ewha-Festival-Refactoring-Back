@@ -50,7 +50,10 @@ class Event(TimeStamp):
         ('정문', '정문'),
         ('포스코관', '포스코관'),
         ('학문관', '학문관'),
-        ('휴웃길', '휴웃길')
+        ('휴웃길', '휴웃길'),
+        ('잔디광장', '잔디광장'),
+        ('학문관광장', '학문관광장'),
+        ('스포츠트랙', '스포츠트랙')
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -100,4 +103,5 @@ class Notice(TimeStamp):
 
 class Time(TimeStamp):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='times')
-    time = models.TextField()
+    starttime = models.TextField(null=True,blank= True)
+    finishtime = models.TextField(null=True,blank= True)
