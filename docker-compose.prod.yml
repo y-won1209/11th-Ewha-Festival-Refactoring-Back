@@ -1,24 +1,23 @@
 version: '3'
 services:
-
   web:
     container_name: web
     build:
       context: ./
       dockerfile: Dockerfile
-      command: gunicorn festival.wsgi:application --bind 0.0.0.0:8000
-      environment:
-      DJANGO_SETTINGS_MODULE: festival.settings.prod
-      env_file:
-        - .env
-      expose:
-        - 8000
-      volumes:
-        - static:/home/app/web/static
-        - media:/home/app/web/media
-      entrypoint:
-        - sh
-        - config/docker/entrypoint.prod.sh
+    command: gunicorn festival.wsgi:application --bind 0.0.0.0:8000
+    environment:
+      - DJANGO_SETTINGS_MODULE=festival.settings.prod
+    env_file:
+      - .env
+    expose:
+      - 8000
+    volumes:
+      - static:/home/app/web/static
+      - media:/home/app/web/media
+    entrypoint:
+      - sh
+      - config/docker/entrypoint.prod.sh
 
   nginx:
     container_name: nginx
