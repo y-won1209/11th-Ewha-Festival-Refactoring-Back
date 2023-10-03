@@ -15,11 +15,6 @@ from event.models import Event, Menu, Image, Comment
 
 
 
-class MenuSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Menu
-        fields = '__all__'
-
 
 class EventListSerializer(serializers.ModelSerializer):
     day = serializers.StringRelatedField(many=True, read_only=True)
@@ -30,7 +25,12 @@ class EventListSerializer(serializers.ModelSerializer):
         fields = fields = ['id', 'user', 'day', 'college', 'name', 'number', 'thumnail', 'description', 'is_liked', 'created_at', 'updated_at']
         read_only_fields= ('thumnail', )
 
-
+class MenuSerializer(serializers.ModelSerializer):
+    event = EventListSerializer()  # Event 모델 시리얼라이저를 중첩
+    class Meta:
+        model = Menu
+        fields = '__all__'
+        
 class ImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Image
