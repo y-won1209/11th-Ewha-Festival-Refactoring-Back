@@ -80,7 +80,7 @@ class Image(TimeStamp):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='images')
     image = models.TextField()
 
-
+'''
 class Menu(TimeStamp):
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='menus')
     menu = models.TextField()
@@ -90,6 +90,19 @@ class Menu(TimeStamp):
 
     def __str__(self):
         return "{} - {}".format(self.menu,self.event.name)
+'''
+class Menu(TimeStamp):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name='menus')
+    menu = models.TextField()
+    price = models.PositiveIntegerField()
+    is_soldout = models.BooleanField(default=False)
+    like = models.ManyToManyField(User, related_name='menus', blank=True)
+    day = models.ManyToManyField(Day, related_name='menu_items')  # day 필드 추가
+    college = models.ManyToManyField(Event, related_name='menu_items2')
+    category = models.ManyToManyField(Event, related_name='menu_items3')
+    def __str__(self):
+        return "{} - {}".format(self.menu, self.event.name)
+    
 
 class Comment(TimeStamp):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')

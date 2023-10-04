@@ -241,9 +241,36 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
         
         serializer = self.serializer_class(menus, many=True)
         return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
+'''
+class LikedMenuListView(views.APIView, PaginationHandlerMixin):
+    pagination_class = EventPagination
+    serializer_class = MenuSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        day = request.GET.get('day')
+        college = request.GET.get('college')
+        category = request.GET.get('category')
+
+        menus = Menu.objects.filter(like=user.id, event__day=day, event__college=college, event__category=category)
+
+
+        total = menus.count()
+        total_page = math.ceil(total / 10)
+        menus = self.paginate_queryset(menus)
+
+        if user:
+            for menu in menus:
+                if menu.like.filter(pk=user.id).exists():
+                    menu.is_liked = True
+        
+        serializer = self.serializer_class(menus, many=True)
+        return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
+
 
 #좋아요한 공연 목록 조회. 필터링
-'''
+
 class LikedShowListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
     serializer_class = EventListSerializer
@@ -309,6 +336,7 @@ class LikedShowListView(views.APIView, PaginationHandlerMixin):
         serializer = self.serializer_class(shows, many=True)
         return Response({'message': '좋아요한 공연 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
 '''
+
 class LikedShowListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
     serializer_class = EventListSerializer
