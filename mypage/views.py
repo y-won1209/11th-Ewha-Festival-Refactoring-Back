@@ -210,7 +210,8 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
 
         serializer = self.serializer_class(menus, many=True)
         return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
-'''
+
+#메뉴 -> 이벤트 id -> day, college, category 
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
     serializer_class = MenuSerializer
@@ -241,6 +242,43 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
         
         serializer = self.serializer_class(menus, many=True)
         return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
+'''
+
+class LikedMenuListView(views.APIView, PaginationHandlerMixin):
+    pagination_class = EventPagination
+    serializer_class = MenuSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        events = Event.objects.filter(menus__like=user.id)  
+
+        day = request.GET.get('day')
+        college = request.GET.get('college')
+        category = request.GET.get('category')
+
+        params = {'day': day, 'college': college, 'category': category}
+        arguments = {}
+        for key, value in params.items():
+            if value:
+                arguments[key] = value
+
+        events = events.filter(**arguments).annotate(
+            number_order=Cast(Substr("number", 2), IntegerField())
+        ).order_by("number_order")
+
+        total = events.count()
+        total_page = math.ceil(total / 10)
+        events = self.paginate_queryset(events)
+
+        if user:
+            for event in events:
+                if event.like.filter(pk=user.id).exists():
+                    event.is_liked = True
+
+        serializer = self.serializer_class(events, many=True)
+        return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
+
 '''
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
