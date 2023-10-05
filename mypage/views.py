@@ -4,8 +4,6 @@ from rest_framework import views
 from rest_framework.status import *
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.pagination import PageNumberPagination
-from .pagination import PaginationHandlerMixin
 from .models import *
 from .serializers import *
 from event.models import *
@@ -38,8 +36,6 @@ class ProfileView(views.APIView):
 
         return Response({'message': "프로필 조회 성공", 'data': newdict}, status=HTTP_200_OK)
 
-class EventPagination(PageNumberPagination):
-    page_size = 10
 
 '''
 class LikedBoothListView(views.APIView, PaginationHandlerMixin):
@@ -75,8 +71,7 @@ class LikedBoothListView(views.APIView, PaginationHandlerMixin):
         return Response({'message': "좋아요한 부스 목록 조회 성공", 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
 '''
 
-class LikedBoothListView(views.APIView, PaginationHandlerMixin):
-    pagination_class = EventPagination
+class LikedBoothListView(views.APIView):
     serializer_class = EventListSerializer
     permission_classes = [IsAuthenticated]
 
@@ -96,9 +91,6 @@ class LikedBoothListView(views.APIView, PaginationHandlerMixin):
         booths = boothss.filter(**arguments).annotate(
                     number_order = Cast(Substr("number", 2), IntegerField())
                 ).order_by("number_order")
-        total = booths.__len__()
-        total_page = math.ceil(total/10)
-        booths = self.paginate_queryset(booths)
 
         if user:
             for booth in booths:
@@ -106,12 +98,11 @@ class LikedBoothListView(views.APIView, PaginationHandlerMixin):
                     booth.is_liked=True
         
         serializer = self.serializer_class(booths, many=True)
-        return Response({'message': '좋아요한 부스 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
+        return Response({'message': '좋아요한 부스 목록 조회 성공', 'data': serializer.data}, status=HTTP_200_OK)
 
 
 #좋아요한 메뉴 목록 조회. 필터링
-class LikedMenuListView(views.APIView, PaginationHandlerMixin):
-    pagination_class = EventPagination
+class LikedMenuListView(views.APIView):
     serializer_class = MenuSerializer
     permission_classes = [IsAuthenticated]
 
@@ -129,13 +120,7 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
             liked_menus = liked_menus.filter(event__college=college)
         if category:
             liked_menus = liked_menus.filter(event__category=category)
-            
 
-        total = liked_menus.count()
-        total_page = math.ceil(total / self.pagination_class.page_size)
-
-        # 페이지네이션 적용  
-        liked_menus = self.paginate_queryset(liked_menus)
 
         if user:
             for menu in liked_menus:
@@ -144,7 +129,7 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
                     
         serializer = self.serializer_class(liked_menus, many=True)
 
-        return Response({'message': "좋아요한 메뉴 목록 조회 성공", 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
+        return Response({'message': "좋아요한 메뉴 목록 조회 성공", 'data': serializer.data}, status=HTTP_200_OK)
 
 '''
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
@@ -379,8 +364,7 @@ class LikedShowListView(views.APIView, PaginationHandlerMixin):
         return Response({'message': '좋아요한 공연 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
 '''
 
-class LikedShowListView(views.APIView, PaginationHandlerMixin):
-    pagination_class = EventPagination
+class LikedShowListView(views.APIView):
     serializer_class = EventListSerializer
     permission_classes = [IsAuthenticated]
 
@@ -400,9 +384,6 @@ class LikedShowListView(views.APIView, PaginationHandlerMixin):
         shows = showss.filter(**arguments).annotate(
                     number_order = Cast(Substr("number", 2), IntegerField())
                 ).order_by("number_order")
-        total = shows.__len__()
-        total_page = math.ceil(total/10)
-        shows = self.paginate_queryset(shows)
 
         if user:
             for show in shows:
@@ -410,4 +391,4 @@ class LikedShowListView(views.APIView, PaginationHandlerMixin):
                     show.is_liked=True
         
         serializer = self.serializer_class(shows, many=True)
-        return Response({'message': '좋아요한 공연 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
+        return Response({'message': '좋아요한 공연 목록 조회 성공', 'data': serializer.data}, status=HTTP_200_OK)
