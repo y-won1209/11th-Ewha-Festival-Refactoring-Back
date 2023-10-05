@@ -87,10 +87,10 @@ class Menu(TimeStamp):
     price = models.PositiveIntegerField()
     is_soldout = models.BooleanField(default=False)
     like = models.ManyToManyField(User, related_name='menus', blank=True)
-
+    
     def __str__(self):
-        return self.name
-        return "{} - {}".format(self.menu,self.event.name)
+        return "{} - {}".format(self.menu, self.event.name)
+    
 
 class Comment(TimeStamp):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
