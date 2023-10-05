@@ -110,7 +110,6 @@ class LikedBoothListView(views.APIView, PaginationHandlerMixin):
 
 
 #좋아요한 메뉴 목록 조회. 필터링
-'''
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
     serializer_class = MenuSerializer
@@ -122,16 +121,14 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
         college = request.GET.get('college')
         category=request.GET.get('category')
 
-        # 사용자가 "좋아요"한 메뉴 필터링
         liked_menus = Menu.objects.filter(like=user.id)
 
-        # "day" 및 "college" 값이 있는 경우 필터링
         if day:
-            liked_menus = liked_menus.filter(day=day)
+            liked_menus = liked_menus.filter(event__day=day)
         if college:
-            liked_menus = liked_menus.filter(college=college)
+            liked_menus = liked_menus.filter(event__college=college)
         if category:
-            liked_menus = liked_menus.filter(category=category)
+            liked_menus = liked_menus.filter(event__category=category)
             
 
         total = liked_menus.count()
@@ -140,10 +137,16 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
         # 페이지네이션 적용  
         liked_menus = self.paginate_queryset(liked_menus)
 
+        if user:
+            for menu in liked_menus:
+                if menu.event.like.filter(pk=user.id).exists():
+                    menu.event.is_liked=True
+                    
         serializer = self.serializer_class(liked_menus, many=True)
 
         return Response({'message': "좋아요한 메뉴 목록 조회 성공", 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
 
+'''
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
     serializer_class = MenuSerializer
@@ -242,7 +245,7 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
         
         serializer = self.serializer_class(menus, many=True)
         return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page' : total_page, 'data': serializer.data}, status=HTTP_200_OK)
-'''
+
 
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
@@ -251,8 +254,9 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
 
     def get(self, request):
         user = request.user
-        events = Event.objects.filter(menus__like=user.id)  
-
+        menus = Menu.objects.filter(like=user.id)  #좋아요한 메뉴 필터링
+        #menus에서 event의 id를 가져오고
+        #그 event id를 이용해서 day,college,category 알아내기
         day = request.GET.get('day')
         college = request.GET.get('college')
         category = request.GET.get('category')
@@ -279,7 +283,7 @@ class LikedMenuListView(views.APIView, PaginationHandlerMixin):
         serializer = self.serializer_class(events, many=True)
         return Response({'message': '좋아요한 메뉴 목록 조회 성공', 'total': total, 'total_page': total_page, 'data': serializer.data}, status=HTTP_200_OK)
 
-'''
+
 class LikedMenuListView(views.APIView, PaginationHandlerMixin):
     pagination_class = EventPagination
     serializer_class = MenuSerializer
