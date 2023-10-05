@@ -1,69 +1,82 @@
-from django.shortcuts import render
-from django.shortcuts import render, get_object_or_404
+#import boto3
+#import uuid
+import math
+
+from django.shortcuts import get_object_or_404
+from django.db.models import IntegerField
+from django.db.models.functions import Cast, Substr
+from django.http import HttpResponseBadRequest
 from rest_framework import views
-from rest_framework import status
+from rest_framework.status import *
 from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
+
 from .models import *
-from detail.serializers import *
-from django.db.models import OuterRef, Subquery, F, Max,ExpressionWrapper,IntegerField
-from django.db.models.functions import Cast
-from django.db.models import CharField
-# Create your views here.
-class EventDetailView(views.APIView):
-    def get(self, request, pk, format=None):
-        event = get_object_or_404(Event, pk=pk)
-        serializer = DetailSerializer(instance=event, context={'request': request})
-        return Response({"message":"이벤트 상세 조회 성공", "data": serializer.data})
+from .serializers import *
 
-# Create your views here.
+#from .storages import FileUpload, s3_client
 
 
-class MenuLikeViewv(views.APIView):
-    def patch(self, request, menu_id):
-        try:
-            menu = Menu.objects.get(pk=menu_id)
-        except Menu.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+class EventListView(views.APIView):
+    serializer_class = EventListSerializer
 
-        # 모든 유저가 false 상태에서 patch를 통해 true로 바꾸는 구현
-        if not menu.like.filter(id=request.user.id).exists():
-            menu.like.add(request.user)
-            is_liked = True
-        else:
-            menu.like.remove(request.user)
-            is_liked = False
+    def get(self, request):
+        user = request.user
+        #필터링 -> day, college, category
+        day = request.GET.get('day')
+        college = request.GET.get('college')
+        category = request.GET.get('category')
+        type=request.GET.get('type')
+       
+       # is_show 값을 기반으로 type 값을 설정
+        # is_show = request.GET.get('is_show')
+        events = Event.objects.all()
+        # if is_show is not None:
+        #     is_show = is_show.lower() == 'true'  # 문자열 'true'를 True로 변환
+        #     if is_show:
+        #         events = events.filter(type = 2)
+        #     else:
+        #         events = events.filter(type = 1)
+        if type:
+            if(type=='2'):
+                #is_show = is_show.lower() == 'true'  # 문자열 'true'를 True로 변환
+                events = events.filter(is_show = True)
+            elif (type=='1'):
+                events = events.filter(is_show = False)
 
-        response_data = {
-            "message": "메뉴 좋아요 상태 변경 성공",
-            "data": {
-                "menu": menu_id,
-                "is_liked": is_liked,
-            }
-        }
+        params = {'day': day, 'college': college, 'category': category}
+        arguments = {}
+        for key, value in params.items():
+            if value:
+                arguments[key] = value
+        if arguments:
+            events = events.filter(**arguments).annotate(
+                    number_order = Cast(Substr("number", 2), IntegerField())
+                ).order_by("number_order")
 
-        return Response(response_data, status=status.HTTP_200_OK)
-    
-class EventLikeView(views.APIView):
-    def patch(self, request, event_id):
-        try:
-            event = Event.objects.get(pk=event_id)
-        except Event.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        if user:
+            for event in events:
+                if event.like.filter(pk=user.id).exists():
+                    event.is_liked=True
+        
+        serializer = self.serializer_class(events, many=True)
+        return Response({'message': '부스/공연 목록 조회 성공', 'data': serializer.data}, status=HTTP_200_OK)
 
-        # 모든 유저가 false 상태에서 patch를 통해 true로 바꾸는 구현
-        if not event.like.filter(id=request.user.id).exists():
-            event.like.add(request.user)
-            is_liked = True
-        else:
-            event.like.remove(request.user)
-            is_liked = False
+class SearchView(views.APIView):
+    serializer_class = EventListSerializer
 
-        response_data = {
-            "message": "이벤트 좋아요 상태 변경 성공",
-            "data": {
-                "event": event_id,
-                "is_liked": is_liked,
-            }
-        }
+    def get(self, request):
+        user = request.user
+        keyword = request.GET.get('keyword', )  # 기본값으로 빈 문자열을 할당합니다.
 
-        return Response(response_data, status=status.HTTP_200_OK)
+        events = (Event.objects.filter(name__icontains=keyword) | Event.objects.filter(menus__menu__contains=keyword)).distinct()
+
+        if user:
+            for event in events:
+                if event.like.filter(pk=user.id).exists():
+                    event.is_liked = True
+
+        serializer = self.serializer_class(events, many=True)
+
+        return Response({'message': '부스/공연 검색 성공', 'data': serializer.data}, status=HTTP_200_OK)
