@@ -19,11 +19,15 @@ from event.models import Event, Menu, Image, Comment
 class EventListSerializer(serializers.ModelSerializer):
     day = serializers.StringRelatedField(many=True, read_only=True)
     is_liked = serializers.BooleanField(default=False)
-    
+    is_like_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Event
-        fields = fields = ['id', 'user', 'day', 'college', 'name', 'number', 'thumnail', 'description', 'is_liked', 'created_at', 'updated_at']
+        fields = fields = ['id', 'user', 'day', 'college','category', 'name', 'number', 'thumnail','opened', 'hashtag','description', 'is_liked', 'is_like_count','busy', 'began', 'wheelchair','is_show', 'contact','created_at', 'updated_at']
         read_only_fields= ('thumnail', )
+
+    def get_is_like_count(self, obj): #좋아요 개수 
+        return obj.like.count()
 
 class MenuSerializer(serializers.ModelSerializer):
     event = EventListSerializer()  # Event 모델 시리얼라이저를 중첩
