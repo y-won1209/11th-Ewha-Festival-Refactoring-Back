@@ -92,6 +92,9 @@ class LikedBoothListView(views.APIView):
                     number_order = Cast(Substr("number", 2), IntegerField())
                 ).order_by("number_order")
 
+        def get_is_like_count(self, obj): #좋아요 개수 
+            return obj.like.count()
+        
         if user:
             for booth in booths:
                 if booth.like.filter(pk=user.id).exists():
